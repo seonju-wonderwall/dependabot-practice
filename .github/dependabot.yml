@@ -1,0 +1,38 @@
+# Dependabot 설정 파일
+# 자세한 정보: https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "npm" # npm 패키지 관리자 사용
+    directory: "/" # package.json 위치
+    schedule:
+      interval: "weekly" # 주간 업데이트 일정
+      day: "monday" # 월요일마다 업데이트 확인
+      time: "09:00" # 오전 9시 (UTC)
+    open-pull-requests-limit: 10 # 최대 PR 개수
+    target-branch: "main" # PR을 보낼 대상 브랜치
+    labels:
+      - "dependencies" # PR에 적용할 라벨
+    
+    # 보안 취약점 관련 설정
+    security-updates-only: false # 모든 업데이트 확인 (보안 업데이트만으로 제한하지 않음)
+    
+    # 버전 업데이트 전략
+    versioning-strategy: auto
+    
+    # 의존성 우선순위 설정
+    allow:
+      # 보안 취약점이 있는 패키지 업데이트 우선
+      - dependency-type: "direct"
+        update-type: "security"
+      # 프로덕션 의존성 업데이트
+      - dependency-type: "direct"
+        update-type: "all"
+      # 개발 의존성 업데이트
+      - dependency-type: "development"
+        update-type: "all"
+    
+    # 무시할 의존성 (필요한 경우 추가)
+    # ignore:
+    #   - dependency-name: "express"
+    #     versions: ["5.x.x"]

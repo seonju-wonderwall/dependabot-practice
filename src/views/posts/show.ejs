@@ -1,0 +1,390 @@
+<div class="mb-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">홈</a></li>
+      <li class="breadcrumb-item"><a href="/posts">게시물</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><%= post.title %></li>
+    </ol>
+  </nav>
+</div>
+
+<% if (typeof message !== 'undefined') { %>
+  <div class="alert alert-<%= messageType || 'info' %> alert-dismissible fade show" role="alert">
+    <%= message %>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } %>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="mb-0"><%= post.title %></h2>
+      <div class="btn-group">
+        <% if (typeof currentUser !== 'undefined' && currentUser && (currentUser._id.toString() === post.author._id.toString() || currentUser.role === 'admin')) { %>
+          <button type="button" class="btn btn-warning edit-post" data-id="<%= post._id %>" data-title="<%= post.title %>" data-content="<%= post.content %>" data-tags="<%= post.tags.join(',') %>">수정</button>
+          <button type="button" class="btn btn-danger delete-post" data-id="<%= post._id %>" data-title="<%= post.title %>">삭제</button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <% if (post.tags && post.tags.length > 0) { %>
+        <div class="mb-2">
+          <% post.tags.forEach(tag => { %>
+            <a href="/posts?tag=<%= tag %>" class="badge badge-secondary mr-1"><%= tag %></a>
+          <% }); %>
+        </div>
+      <% } %>
+      <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+          작성자: <a href="/users/<%= post.author._id %>"><%= post.author.username %></a>
+        </small>
+        <small class="text-muted">
+          작성일: <%= moment(post.createdAt).format('YYYY-MM-DD HH:mm:ss') %>
+          <% if (post.updatedAt && post.updatedAt.getTime() !== post.createdAt.getTime()) { %>
+            (수정됨: <%= moment(post.updatedAt).format('YYYY-MM-DD HH:mm:ss') %>)
+          <% } %>
+        </small>
+      </div>
+    </div>
+    <hr>
+    <div class="post-content">
+      <%= post.content %>
+    </div>
+    <hr>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <button class="btn btn-sm btn-outline-primary like-post" data-id="<%= post._id %>">
+          <i class="fa fa-heart"></i> 좋아요 (<span id="likeCount"><%= post.likes %></span>)
+        </button>
+      </div>
+      <div>
+        <span class="badge badge-primary">
+          <i class="fa fa-eye"></i> 조회수: <%= post.views %>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>댓글</h4>
+  </div>
+  <div class="card-body">
+    <% if (typeof comments !== 'undefined' && comments.length > 0) { %>
+      <div class="comments-list">
+        <% comments.forEach(comment => { %>
+          <div class="media mb-3">
+            <div class="media-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mt-0"><%= comment.author.username %></h5>
+                <small class="text-muted"><%= moment(comment.createdAt).format('YYYY-MM-DD HH:mm:ss') %></small>
+              </div>
+              <p><%= comment.content %></p>
+              <% if (typeof currentUser !== 'undefined' && currentUser && (currentUser._id.toString() === comment.author._id.toString() || currentUser.role === 'admin')) { %>
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-outline-warning edit-comment" data-id="<%= comment._id %>" data-content="<%= comment.content %>">수정</button>
+                  <button type="button" class="btn btn-outline-danger delete-comment" data-id="<%= comment._id %>">삭제</button>
+                </div>
+              <% } %>
+            </div>
+          </div>
+          <hr>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="alert alert-info">
+        아직 댓글이 없습니다. 첫 댓글을 작성해보세요!
+      </div>
+    <% } %>
+    
+    <div class="add-comment mt-4">
+      <h5>댓글 작성</h5>
+      <form id="addCommentForm">
+        <input type="hidden" name="postId" value="<%= post._id %>">
+        <div class="form-group">
+          <textarea class="form-control" id="commentContent" name="content" rows="3" required placeholder="댓글을 입력하세요..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">댓글 작성</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h4>관련 게시물</h4>
+  </div>
+  <div class="card-body">
+    <% if (typeof relatedPosts !== 'undefined' && relatedPosts.length > 0) { %>
+      <div class="row">
+        <% relatedPosts.forEach(relatedPost => { %>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <a href="/posts/<%= relatedPost._id %>"><%= relatedPost.title %></a>
+                </h5>
+                <p class="card-text"><%= _.truncate(relatedPost.content, { length: 100 }) %></p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    작성자: <%= relatedPost.author.username %>
+                  </small>
+                  <small class="text-muted">
+                    <%= moment(relatedPost.createdAt).format('YYYY-MM-DD') %>
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="alert alert-info">
+        관련 게시물이 없습니다.
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- 게시물 수정 모달 -->
+<div class="modal fade" id="editPostModal" tabindex="-1" role="dialog" aria-labelledby="editPostModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPostModalLabel">게시물 수정</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="editPostForm" action="/api/posts" method="PUT">
+        <input type="hidden" id="editPostId" name="id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editTitle">제목</label>
+            <input type="text" class="form-control" id="editTitle" name="title" required minlength="3" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="editContent">내용</label>
+            <textarea class="form-control" id="editContent" name="content" rows="5" required minlength="10"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editTags">태그 (쉼표로 구분)</label>
+            <input type="text" class="form-control" id="editTags" name="tags" placeholder="예: 기술, 프로그래밍, 자바스크립트">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-success">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 게시물 삭제 확인 모달 -->
+<div class="modal fade" id="deletePostModal" tabindex="-1" role="dialog" aria-labelledby="deletePostModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deletePostModalLabel">게시물 삭제 확인</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>정말로 "<strong id="deletePostTitle"></strong>" 게시물을 삭제하시겠습니까?</p>
+        <p class="text-danger">이 작업은 되돌릴 수 없습니다.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-danger" id="confirmDeletePost">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 댓글 수정 모달 -->
+<div class="modal fade" id="editCommentModal" tabindex="-1" role="dialog" aria-labelledby="editCommentModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editCommentModalLabel">댓글 수정</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="editCommentForm">
+        <input type="hidden" id="editCommentId" name="id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editCommentContent">내용</label>
+            <textarea class="form-control" id="editCommentContent" name="content" rows="3" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 게시물 수정 모달 데이터 설정
+  $('.edit-post').on('click', function() {
+    const id = $(this).data('id');
+    const title = $(this).data('title');
+    const content = $(this).data('content');
+    const tags = $(this).data('tags');
+    
+    $('#editPostId').val(id);
+    $('#editTitle').val(title);
+    $('#editContent').val(content);
+    $('#editTags').val(tags);
+    
+    $('#editPostModal').modal('show');
+  });
+  
+  // 게시물 삭제 모달 데이터 설정
+  $('.delete-post').on('click', function() {
+    const id = $(this).data('id');
+    const title = $(this).data('title');
+    
+    $('#deletePostTitle').text(title);
+    $('#confirmDeletePost').data('id', id);
+    
+    $('#deletePostModal').modal('show');
+  });
+  
+  // 게시물 삭제 확인
+  $('#confirmDeletePost').on('click', function() {
+    const id = $(this).data('id');
+    
+    $.ajax({
+      url: `/api/posts/${id}`,
+      type: 'DELETE',
+      success: function(result) {
+        window.location.href = '/posts';
+      },
+      error: function(err) {
+        alert('게시물 삭제 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 게시물 수정 폼 제출
+  $('#editPostForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const id = $('#editPostId').val();
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: `/api/posts/${id}`,
+      type: 'PUT',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('게시물 수정 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 좋아요 버튼 클릭
+  $('.like-post').on('click', function() {
+    const id = $(this).data('id');
+    
+    $.ajax({
+      url: `/api/posts/${id}/like`,
+      type: 'POST',
+      success: function(result) {
+        $('#likeCount').text(result.likes);
+      },
+      error: function(err) {
+        alert('좋아요 처리 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 댓글 작성 폼 제출
+  $('#addCommentForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: '/api/comments',
+      type: 'POST',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('댓글 작성 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 댓글 수정 모달 데이터 설정
+  $('.edit-comment').on('click', function() {
+    const id = $(this).data('id');
+    const content = $(this).data('content');
+    
+    $('#editCommentId').val(id);
+    $('#editCommentContent').val(content);
+    
+    $('#editCommentModal').modal('show');
+  });
+  
+  // 댓글 수정 폼 제출
+  $('#editCommentForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const id = $('#editCommentId').val();
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: `/api/comments/${id}`,
+      type: 'PUT',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('댓글 수정 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 댓글 삭제
+  $('.delete-comment').on('click', function() {
+    const id = $(this).data('id');
+    
+    if (confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
+      $.ajax({
+        url: `/api/comments/${id}`,
+        type: 'DELETE',
+        success: function(result) {
+          location.reload();
+        },
+        error: function(err) {
+          alert('댓글 삭제 중 오류가 발생했습니다.');
+          console.error(err);
+        }
+      });
+    }
+  });
+</script>

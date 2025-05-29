@@ -1,0 +1,316 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>게시물 목록</h2>
+  <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addPostModal">
+    새 게시물 작성
+  </button>
+</div>
+
+<% if (typeof message !== 'undefined') { %>
+  <div class="alert alert-<%= messageType || 'info' %> alert-dismissible fade show" role="alert">
+    <%= message %>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-md-6">
+        <form class="form-inline" action="/posts" method="GET">
+          <div class="form-group mr-2">
+            <input type="text" class="form-control" name="search" placeholder="게시물 검색..." value="<%= typeof search !== 'undefined' ? search : '' %>">
+          </div>
+          <button type="submit" class="btn btn-outline-success">검색</button>
+        </form>
+      </div>
+      <div class="col-md-6 text-right">
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            정렬
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="/posts?sort=title">제목순</a>
+            <a class="dropdown-item" href="/posts?sort=createdAt">작성일순</a>
+            <a class="dropdown-item" href="/posts?sort=views">조회수순</a>
+            <a class="dropdown-item" href="/posts?sort=likes">좋아요순</a>
+          </div>
+        </div>
+        <div class="btn-group ml-2">
+          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            태그
+          </button>
+          <div class="dropdown-menu">
+            <% if (typeof tags !== 'undefined' && tags.length > 0) { %>
+              <% tags.forEach(tag => { %>
+                <a class="dropdown-item" href="/posts?tag=<%= tag %>"><%= tag %></a>
+              <% }); %>
+            <% } else { %>
+              <a class="dropdown-item disabled" href="#">태그 없음</a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <% if (posts && posts.length > 0) { %>
+      <div class="row">
+        <% posts.forEach(post => { %>
+          <div class="col-md-6 mb-4">
+            <div class="card h-100">
+              <div class="card-header">
+                <h5 class="card-title mb-0">
+                  <a href="/posts/<%= post._id %>"><%= post.title %></a>
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text"><%= _.truncate(post.content, { length: 150 }) %></p>
+                <% if (post.tags && post.tags.length > 0) { %>
+                  <div class="mb-2">
+                    <% post.tags.forEach(tag => { %>
+                      <a href="/posts?tag=<%= tag %>" class="badge badge-secondary mr-1"><%= tag %></a>
+                    <% }); %>
+                  </div>
+                <% } %>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">
+                    작성자: <%= post.author ? post.author.username : '알 수 없음' %>
+                  </small>
+                  <div>
+                    <span class="badge badge-primary mr-1">
+                      <i class="fa fa-eye"></i> <%= post.views %>
+                    </span>
+                    <span class="badge badge-danger">
+                      <i class="fa fa-heart"></i> <%= post.likes %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <small class="text-muted">
+                  작성일: <%= moment(post.createdAt).format('YYYY-MM-DD HH:mm:ss') %>
+                </small>
+                <div class="btn-group btn-group-sm float-right">
+                  <a href="/posts/<%= post._id %>" class="btn btn-info">보기</a>
+                  <% if (typeof currentUser !== 'undefined' && currentUser && (currentUser._id.toString() === post.author._id.toString() || currentUser.role === 'admin')) { %>
+                    <button type="button" class="btn btn-warning edit-post" data-id="<%= post._id %>" data-title="<%= post.title %>" data-content="<%= post.content %>" data-tags="<%= post.tags.join(',') %>">수정</button>
+                    <button type="button" class="btn btn-danger delete-post" data-id="<%= post._id %>" data-title="<%= post.title %>">삭제</button>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="alert alert-info">
+        등록된 게시물이 없습니다.
+      </div>
+    <% } %>
+  </div>
+  <div class="card-footer">
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        <% if (typeof pagination !== 'undefined') { %>
+          <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+            <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+              <a class="page-link" href="/posts?page=<%= i %><%= typeof search !== 'undefined' ? '&search=' + search : '' %><%= typeof tag !== 'undefined' ? '&tag=' + tag : '' %>"><%= i %></a>
+            </li>
+          <% } %>
+        <% } %>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- 게시물 작성 모달 -->
+<div class="modal fade" id="addPostModal" tabindex="-1" role="dialog" aria-labelledby="addPostModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addPostModalLabel">새 게시물 작성</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="addPostForm" action="/api/posts" method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="title">제목</label>
+            <input type="text" class="form-control" id="title" name="title" required minlength="3" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="content">내용</label>
+            <textarea class="form-control" id="content" name="content" rows="5" required minlength="10"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="tags">태그 (쉼표로 구분)</label>
+            <input type="text" class="form-control" id="tags" name="tags" placeholder="예: 기술, 프로그래밍, 자바스크립트">
+          </div>
+          <% if (typeof users !== 'undefined' && users.length > 0) { %>
+            <div class="form-group">
+              <label for="author">작성자</label>
+              <select class="form-control" id="author" name="author" required>
+                <option value="">작성자 선택</option>
+                <% users.forEach(user => { %>
+                  <option value="<%= user._id %>" <%= typeof currentUser !== 'undefined' && currentUser && currentUser._id.toString() === user._id.toString() ? 'selected' : '' %>><%= user.username %></option>
+                <% }); %>
+              </select>
+            </div>
+          <% } else { %>
+            <input type="hidden" id="author" name="author" value="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser._id : '' %>">
+          <% } %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-success">게시</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 게시물 수정 모달 -->
+<div class="modal fade" id="editPostModal" tabindex="-1" role="dialog" aria-labelledby="editPostModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPostModalLabel">게시물 수정</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="editPostForm" action="/api/posts" method="PUT">
+        <input type="hidden" id="editPostId" name="id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editTitle">제목</label>
+            <input type="text" class="form-control" id="editTitle" name="title" required minlength="3" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label for="editContent">내용</label>
+            <textarea class="form-control" id="editContent" name="content" rows="5" required minlength="10"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editTags">태그 (쉼표로 구분)</label>
+            <input type="text" class="form-control" id="editTags" name="tags" placeholder="예: 기술, 프로그래밍, 자바스크립트">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-success">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 게시물 삭제 확인 모달 -->
+<div class="modal fade" id="deletePostModal" tabindex="-1" role="dialog" aria-labelledby="deletePostModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deletePostModalLabel">게시물 삭제 확인</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>정말로 "<strong id="deletePostTitle"></strong>" 게시물을 삭제하시겠습니까?</p>
+        <p class="text-danger">이 작업은 되돌릴 수 없습니다.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-danger" id="confirmDeletePost">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 게시물 수정 모달 데이터 설정
+  $('.edit-post').on('click', function() {
+    const id = $(this).data('id');
+    const title = $(this).data('title');
+    const content = $(this).data('content');
+    const tags = $(this).data('tags');
+    
+    $('#editPostId').val(id);
+    $('#editTitle').val(title);
+    $('#editContent').val(content);
+    $('#editTags').val(tags);
+    
+    $('#editPostModal').modal('show');
+  });
+  
+  // 게시물 삭제 모달 데이터 설정
+  $('.delete-post').on('click', function() {
+    const id = $(this).data('id');
+    const title = $(this).data('title');
+    
+    $('#deletePostTitle').text(title);
+    $('#confirmDeletePost').data('id', id);
+    
+    $('#deletePostModal').modal('show');
+  });
+  
+  // 게시물 삭제 확인
+  $('#confirmDeletePost').on('click', function() {
+    const id = $(this).data('id');
+    
+    $.ajax({
+      url: `/api/posts/${id}`,
+      type: 'DELETE',
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('게시물 삭제 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 게시물 작성 폼 제출
+  $('#addPostForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: '/api/posts',
+      type: 'POST',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('게시물 작성 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 게시물 수정 폼 제출
+  $('#editPostForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const id = $('#editPostId').val();
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: `/api/posts/${id}`,
+      type: 'PUT',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('게시물 수정 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+</script>

@@ -1,0 +1,65 @@
+<div class="jumbotron">
+  <h1 class="display-4"><%= title %></h1>
+  <p class="lead"><%= message %></p>
+  <hr class="my-4">
+  <p>이 애플리케이션은 Dependabot 연습을 위해 구식 Express 애플리케이션으로 구현되었습니다.</p>
+  <p>다음과 같은 오래된 의존성을 포함하고 있습니다:</p>
+  <ul>
+    <li>express: ^4.16.0</li>
+    <li>body-parser: ^1.18.0</li>
+    <li>mongoose: ^5.0.0</li>
+    <li>ejs: ^2.6.0</li>
+    <li>lodash: ^4.17.10 (보안 취약점 있는 버전)</li>
+    <li>moment: ^2.20.0 (보안 취약점 있는 버전)</li>
+    <li>axios: ^0.18.0 (보안 취약점 있는 버전)</li>
+  </ul>
+  <p class="lead">
+    <a class="btn btn-primary btn-lg" href="/users" role="button">사용자 관리</a>
+    <a class="btn btn-success btn-lg" href="/posts" role="button">게시물 관리</a>
+  </p>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">사용자 관리</h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text">사용자 등록, 조회, 수정, 삭제 기능을 제공합니다.</p>
+        <a href="/users" class="btn btn-primary">사용자 관리</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">게시물 관리</h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text">게시물 작성, 조회, 수정, 삭제 기능을 제공합니다.</p>
+        <a href="/posts" class="btn btn-success">게시물 관리</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">API 문서</h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text">RESTful API 엔드포인트에 대한 문서를 제공합니다.</p>
+        <a href="/api" class="btn btn-info">API 문서</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-warning mt-4">
+  <h4 class="alert-heading">보안 취약점 주의!</h4>
+  <p>이 애플리케이션은 보안 취약점이 있는 오래된 패키지를 사용하고 있습니다. 실제 프로덕션 환경에서는 사용하지 마세요!</p>
+  <hr>
+  <p class="mb-0">이 애플리케이션은 Dependabot이 보안 취약점을 감지하고 업데이트를 제안하는 방법을 연습하기 위한 목적으로만 사용됩니다.</p>
+</div>

@@ -1,0 +1,282 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>사용자 목록</h2>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addUserModal">
+    새 사용자 추가
+  </button>
+</div>
+
+<% if (typeof message !== 'undefined') { %>
+  <div class="alert alert-<%= messageType || 'info' %> alert-dismissible fade show" role="alert">
+    <%= message %>
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-md-6">
+        <form class="form-inline" action="/users" method="GET">
+          <div class="form-group mr-2">
+            <input type="text" class="form-control" name="search" placeholder="사용자 검색..." value="<%= typeof search !== 'undefined' ? search : '' %>">
+          </div>
+          <button type="submit" class="btn btn-outline-primary">검색</button>
+        </form>
+      </div>
+      <div class="col-md-6 text-right">
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            정렬
+          </button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="/users?sort=username">이름순</a>
+            <a class="dropdown-item" href="/users?sort=createdAt">등록일순</a>
+            <a class="dropdown-item" href="/users?sort=role">역할순</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <% if (users && users.length > 0) { %>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th>ID</th>
+              <th>사용자명</th>
+              <th>이메일</th>
+              <th>역할</th>
+              <th>등록일</th>
+              <th>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach(user => { %>
+              <tr>
+                <td><%= user._id %></td>
+                <td><%= user.username %></td>
+                <td><%= user.email %></td>
+                <td><span class="badge badge-<%= user.role === 'admin' ? 'danger' : 'info' %>"><%= user.role %></span></td>
+                <td><%= moment(user.createdAt).format('YYYY-MM-DD HH:mm:ss') %></td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <a href="/users/<%= user._id %>" class="btn btn-info">보기</a>
+                    <button type="button" class="btn btn-warning edit-user" data-id="<%= user._id %>" data-username="<%= user.username %>" data-email="<%= user.email %>" data-role="<%= user.role %>">수정</button>
+                    <button type="button" class="btn btn-danger delete-user" data-id="<%= user._id %>" data-username="<%= user.username %>">삭제</button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <div class="alert alert-info">
+        등록된 사용자가 없습니다.
+      </div>
+    <% } %>
+  </div>
+  <div class="card-footer">
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        <% if (typeof pagination !== 'undefined') { %>
+          <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+            <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+              <a class="page-link" href="/users?page=<%= i %><%= typeof search !== 'undefined' ? '&search=' + search : '' %>"><%= i %></a>
+            </li>
+          <% } %>
+        <% } %>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- 사용자 추가 모달 -->
+<div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUserModalLabel">새 사용자 추가</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="addUserForm" action="/api/users" method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="username">사용자명</label>
+            <input type="text" class="form-control" id="username" name="username" required minlength="3" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="email">이메일</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="password">비밀번호</label>
+            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="role">역할</label>
+            <select class="form-control" id="role" name="role">
+              <option value="user">일반 사용자</option>
+              <option value="admin">관리자</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-primary">추가</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 사용자 수정 모달 -->
+<div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editUserModalLabel">사용자 정보 수정</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="editUserForm" action="/api/users" method="PUT">
+        <input type="hidden" id="editUserId" name="id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editUsername">사용자명</label>
+            <input type="text" class="form-control" id="editUsername" name="username" required minlength="3" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="editEmail">이메일</label>
+            <input type="email" class="form-control" id="editEmail" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="editRole">역할</label>
+            <select class="form-control" id="editRole" name="role">
+              <option value="user">일반 사용자</option>
+              <option value="admin">관리자</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="submit" class="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 사용자 삭제 확인 모달 -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteUserModalLabel">사용자 삭제 확인</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>정말로 <strong id="deleteUserName"></strong> 사용자를 삭제하시겠습니까?</p>
+        <p class="text-danger">이 작업은 되돌릴 수 없습니다.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteUser">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 사용자 수정 모달 데이터 설정
+  $('.edit-user').on('click', function() {
+    const id = $(this).data('id');
+    const username = $(this).data('username');
+    const email = $(this).data('email');
+    const role = $(this).data('role');
+    
+    $('#editUserId').val(id);
+    $('#editUsername').val(username);
+    $('#editEmail').val(email);
+    $('#editRole').val(role);
+    
+    $('#editUserModal').modal('show');
+  });
+  
+  // 사용자 삭제 모달 데이터 설정
+  $('.delete-user').on('click', function() {
+    const id = $(this).data('id');
+    const username = $(this).data('username');
+    
+    $('#deleteUserName').text(username);
+    $('#confirmDeleteUser').data('id', id);
+    
+    $('#deleteUserModal').modal('show');
+  });
+  
+  // 사용자 삭제 확인
+  $('#confirmDeleteUser').on('click', function() {
+    const id = $(this).data('id');
+    
+    $.ajax({
+      url: `/api/users/${id}`,
+      type: 'DELETE',
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('사용자 삭제 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 사용자 추가 폼 제출
+  $('#addUserForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: '/api/users',
+      type: 'POST',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('사용자 추가 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+  
+  // 사용자 수정 폼 제출
+  $('#editUserForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const id = $('#editUserId').val();
+    const formData = $(this).serialize();
+    
+    $.ajax({
+      url: `/api/users/${id}`,
+      type: 'PUT',
+      data: formData,
+      success: function(result) {
+        location.reload();
+      },
+      error: function(err) {
+        alert('사용자 수정 중 오류가 발생했습니다.');
+        console.error(err);
+      }
+    });
+  });
+</script>
